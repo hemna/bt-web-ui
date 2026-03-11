@@ -23,7 +23,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 ```
 
 ## Verify Bluetooth is Available
@@ -44,7 +44,7 @@ bluetoothctl power on
 
 ```bash
 # From the repository root, with venv activated
-uvicorn backend.src.bt_web_ui.main:app --host 0.0.0.0 --port 8080
+PYTHONPATH=backend/src uvicorn bt_web_ui.main:app --host 0.0.0.0 --port 8080
 
 # The app is now accessible at http://<pi-ip-address>:8080
 ```
@@ -68,22 +68,22 @@ with BlueZ. If you get permission errors, either:
 
 ```bash
 # Install dev dependencies
-pip install -r requirements-dev.txt
+pip install -r backend/requirements-dev.txt
 
 # Run all tests
-pytest
+PYTHONPATH=backend/src pytest backend/tests/ -v
 
 # Run with coverage
-pytest --cov=backend/src/bt_web_ui --cov-report=term-missing
+PYTHONPATH=backend/src pytest backend/tests/ --cov=bt_web_ui --cov-report=term-missing
 
 # Run only unit tests
-pytest tests/unit/
+PYTHONPATH=backend/src pytest backend/tests/unit/
 
 # Run only integration tests (includes D-Bus mocking)
-pytest tests/integration/
+PYTHONPATH=backend/src pytest backend/tests/integration/
 
 # Run only API tests
-pytest tests/api/
+PYTHONPATH=backend/src pytest backend/tests/api/
 ```
 
 ## Project Structure (Key Files)
@@ -133,9 +133,10 @@ Requires=bluetooth.service
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/bt-web-ui
+Environment=PYTHONPATH=/home/pi/bt-web-ui/backend/src
 Environment=PATH=/home/pi/bt-web-ui/.venv/bin:/usr/bin
 ExecStart=/home/pi/bt-web-ui/.venv/bin/uvicorn \
-    backend.src.bt_web_ui.main:app \
+    bt_web_ui.main:app \
     --host 0.0.0.0 --port 8080
 Restart=on-failure
 RestartSec=5
