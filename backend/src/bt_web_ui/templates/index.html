@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bluetooth Web UI{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Bluetooth adapter overview and quick actions</p>
+</div>
+
+<!-- Adapter Status Card -->
+<div class="card mb-4" x-data="{ scanning: false }">
+  <div class="card__header">
+    <h2>Adapter Status</h2>
+    {% if adapter %}
+    <div class="flex items-center gap-2">
+      {% if adapter.powered %}
+        <span class="badge badge--on">Powered On</span>
+      {% else %}
+        <span class="badge badge--off">Powered Off</span>
+      {% endif %}
+      {% if adapter.discovering %}
+        <span class="badge badge--pairing">Scanning</span>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  <div class="card__body">
+    {% if adapter %}
+    <div class="info-grid mb-4">
+      <dt>Address</dt>
+      <dd><code>{{ adapter.address }}</code></dd>
+
+      <dt>Name</dt>
+      <dd>{{ adapter.name }}</dd>
+
+      <dt>Powered</dt>
+      <dd>
+        {% if adapter.powered %}
+          <span class="badge badge--on">Yes</span>
+        {% else %}
+          <span class="badge badge--off">No</span>
+        {% endif %}
+      </dd>
+
+      <dt>Discoverable</dt>
+      <dd>
+        {% if adapter.discoverable %}
+          <span class="badge badge--on">Yes</span>
+        {% else %}
+          <span class="badge badge--off">No</span>
+        {% endif %}
+      </dd>
+
+      <dt>Discovering</dt>
+      <dd>
+        {% if adapter.discovering %}
+          <span class="badge badge--pairing">Active</span>
+        {% else %}
+          <span class="badge badge--disconnected">Inactive</span>
+        {% endif %}
+      </dd>
+    </div>
+
+    <div class="action-group">
+      <!-- Power Toggle -->
+      {% if adapter.powered %}
+      <button class="btn btn--secondary"
+              hx-post="/api/adapter/power"
+              hx-vals='{"powered": false}'
+              hx-target="body"
+              hx-swap="outerHTML"
+              hx-indicator=".power-indicator">
+        Power Off
+        <span class="spinner spinner--sm htmx-indicator power-indicator"></span>
+      </button>
+      {% else %}
+      <button class="btn btn--primary"
+              hx-post="/api/adapter/power"
+              hx-vals='{"powered": true}'
+              hx-target="body"
+              hx-swap="outerHTML"
+              hx-indicator=".power-indicator">
+        Power On
+        <span class="spinner spinner--sm htmx-indicator power-indicator"></span>
+      </button>
+      {% endif %}
+
+      <!-- Scan Toggle -->
+      {% if adapter.powered %}
+        {% if adapter.discovering %}
+        <button class="btn btn--danger"
+                hx-post="/api/scan/stop"
+                hx-target="#scan-results"
+                hx-indicator=".scan-indicator"
+                @click="scanning = false">
+          Stop Scan
+          <span class="spinner spinner--sm htmx-indicator scan-indicator"></span>
+        </button>
+        {% else %}
+        <button class="btn btn--primary"
+                hx-post="/api/scan/start"
+                hx-target="#scan-results"
+                hx-indicator=".scan-indicator"
+                @click="scanning = true">
+          Start Scan
+          <span class="spinner spinner--sm htmx-indicator scan-indicator"></span>
+        </button>
+        {% endif %}
+      {% endif %}
+    </div>
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state__icon">&#128225;</div>
+      <div class="empty-state__title">No Adapter Found</div>
+      <p class="empty-state__text">
+        No Bluetooth adapter was detected. Make sure a Bluetooth adapter is plugged in and BlueZ is running.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Scan Results -->
+<div class="card mb-4" id="scan-results-card">
+  <div class="card__header">
+    <h2>Scan Results</h2>
+  </div>
+  <div class="card__body" id="scan-results">
+    <div class="empty-state">
+      <div class="empty-state__icon">&#128269;</div>
+      <p class="empty-state__text">
+        Click "Start Scan" to discover nearby Bluetooth devices.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Device Summary Stats -->
+<div class="stat-grid mb-4">
+  <div class="stat-card">
+    <div class="stat-card__value">{{ device_count | default(0) }}</div>
+    <div class="stat-card__label">Total Devices</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ paired_count | default(0) }}</div>
+    <div class="stat-card__label">Paired</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ connected_count | default(0) }}</div>
+    <div class="stat-card__label">Connected</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-card__value">{{ favorite_count | default(0) }}</div>
+    <div class="stat-card__label">Favorites</div>
+  </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+  <div class="card__header">
+    <h2>Quick Actions</h2>
+  </div>
+  <div class="card__body">
+    <div class="action-group">
+      <a href="/devices" class="btn btn--secondary">
+        View All Devices
+      </a>
+      <a href="/devices?filter=connected" class="btn btn--secondary">
+        Connected Devices
+      </a>
+      <a href="/devices?filter=favorites" class="btn btn--secondary">
+        Favorite Devices
+      </a>
+      <a href="/settings" class="btn btn--secondary">
+        Settings
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}
